@@ -1,0 +1,4 @@
+services:
+  TweedeKamerFeedAnalyzer:
+    image: berrydenhartog/TweedeKamerFeedAnalyzer:dev
+    build: FeedAnalyzer/
