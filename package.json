@@ -19,6 +19,7 @@
   "scripts": {
     "style-dictionary": "style-dictionary",
     "lint:md": "markdownlint '**/*.md'",
+    "lint:sh": "shellcheck **/*.sh",
     "format:write": "npx prettier . --write",
     "format:check": "npx prettier . --check"
   },
@@ -28,6 +29,7 @@
     "markdownlint": "^0.35.0",
     "markdownlint-cli": "^0.42.0",
     "prettier": "^3.3.3",
+    "shellcheck": "^3.0.0",
     "style-dictionary": "^4.1.3"
   }
 }
