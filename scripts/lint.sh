@@ -2,5 +2,16 @@
 
 set -x
 
-# govet
-# golints
+# lint Markdown files
+
+
+# lint Go files
+
+
+# lint json and yaml files
+
+
+# lint bash scripts
+
+
+# lint Dockerfiles

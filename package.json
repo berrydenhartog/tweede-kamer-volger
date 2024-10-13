@@ -1,0 +1,34 @@
+{
+  "name": "TweedeKamerVolger",
+  "version": "0.1.0",
+  "description": "This project analyzes the data published by the dutch government `Tweede Kamer der staten general` and makes it insightful through a user interface.",
+  "keywords": [
+    "Tweede Kamer",
+    "Dutch Government",
+    "Data Analysis"
+  ],
+  "homepage": "https://github.com/berrydenhartog/TweedeKamerAnalyzer/blob/main/README.md",
+  "bugs": {
+    "url": "https://github.com/berrydenhartog/TweedeKamerAnalyzer/issues"
+  },
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+github.com/berrydenhartog/TweedeKamerAnalyzer.git"
+  },
+  "scripts": {
+    "style-dictionary": "style-dictionary",
+    "lint:md:fix": "markdownlint '**/*.md' --fix",
+    "lint:md": "markdownlint '**/*.md'",
+    "format:write": "npx prettier . --write",
+    "format:check": "npx prettier . --check"
+  },
+  "author": "berrydenhartog",
+  "license": "MIT",
+  "devDependencies": {
+    "markdownlint": "^0.35.0",
+    "markdownlint-cli": "^0.42.0",
+    "prettier": "^3.3.3",
+    "style-dictionary": "^4.1.3"
+  }
+}

@@ -1,10 +1,14 @@
-name: Build
+name: Build Feed Document
 on:
   push:
     branches:
       - main
+    paths:
+      - "FeedDocument/**"
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - "FeedDocument/**"
 jobs:
   sonarcloud:
     name: SonarCloud
