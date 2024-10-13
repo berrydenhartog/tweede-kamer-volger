@@ -1,16 +1,16 @@
 # TweedeKamerVolger
 
-This project analyzes the data published by the dutch government
-`Tweede Kamer der staten general` and makes it insightful through a user interface.
+This project analyzes the data published by the dutch government `Tweede Kamer der staten general` and makes it
+insightful through a user interface.
 
 ## Gegevends Magazijn Explained
 
-The `Tweede Kamer der Staten-Generaal` publishes all data in the [Gegevens Magazijn](https://gegevensmagazijn.tweedekamer.nl).
+The `Tweede Kamer der Staten-Generaal` publishes all data in the
+[Gegevens Magazijn](https://gegevensmagazijn.tweedekamer.nl).
 
-The documentation on the structure and content of the data can be found
-[here](https://opendata.tweedekamer.nl/). In this project we will use the
-SyncFeed API to extract all data, index it and structure it so it can be easily
-searched and analyzed.
+The documentation on the structure and content of the data can be found [here](https://opendata.tweedekamer.nl/). In
+this project we will use the SyncFeed API to extract all data, index it and structure it so it can be easily searched
+and analyzed.
 
 The APIs are:
 

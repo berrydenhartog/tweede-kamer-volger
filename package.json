@@ -18,7 +18,6 @@
   },
   "scripts": {
     "style-dictionary": "style-dictionary",
-    "lint:md:fix": "markdownlint '**/*.md' --fix",
     "lint:md": "markdownlint '**/*.md'",
     "format:write": "npx prettier . --write",
     "format:check": "npx prettier . --check"
