@@ -2,6 +2,8 @@ ARG GO_VERSION=1.23
 
 FROM  --platform=$BUILDPLATFORM golang:${GO_VERSION} AS builder
 
+ENV CGO_ENABLED=0
+
 WORKDIR /usr/src/app
 
 COPY go.mod ./ 
@@ -12,12 +14,10 @@ RUN go build -v -o /usr/local/bin/app ./...
 
 FROM scratch
 
-WORKDIR /usr/src/app
+USER 65534
+WORKDIR /usr/local/bin/
 
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/group /etc/group
-COPY --from=builder /usr/local/bin/app /usr/local/bin/app
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/local/bin/app /app
 
-USER nobody
-
-ENTRYPOINT [ "app" ]
+ENTRYPOINT ["/app"]
