@@ -1,4 +1,6 @@
-FROM golang:1.23 AS builder
+ARG GO_VERSION=1.23
+
+FROM  --platform=$BUILDPLATFORM golang:${GO_VERSION} AS builder
 
 WORKDIR /usr/src/app
 

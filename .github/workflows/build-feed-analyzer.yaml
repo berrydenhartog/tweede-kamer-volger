@@ -9,16 +9,132 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - "FeedAnalyzer/**"
+
+env:
+  PROJECT_DIR: FeedAnalyzer
+  IMAGE_NAME: berrydenhartog/tweede-kamer-feed-analyzer
+
 jobs:
-  sonarcloud:
-    name: SonarCloud
+  quality: 
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23.1
+
+      - name: format check
+        run: gofmt -l $PROJECT_DIR/*.go
+
+      - name: lint check
+        run: go vet $PROJECT_DIR/*.go
+
+      # - name: test code
+      #   run: go test $PROJECT_DIR
+          
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  build: 
+    needs: [quality]
+    runs-on: ubuntu-latest
+    permissions:
+        packages: write
+        contents: read
+        security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: $PROJECT_DIR/
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          platforms: linux/amd64,linux/arm64,darwin/amd64
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
+
+
+      - name: Run Trivy vulnerability scanner sarif
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          scan-type: image
+          exit-code: 0
+          format: "sarif"
+          output: "trivy-results.sarif"
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      - name: Run Trivy SBOM
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          scan-type: image
+          exit-code: 0
+          format: "cyclonedx"
+          output: "trivy-sbom.json"
+          list-all-pkgs: "true"
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy license scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          scan-type: image
+          scanners: "license"
+          exit-code: 0
+          output: "trivy-license.json"
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload SBOM & License
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-licence-${{ github.run_id }}.json
+          path: |
+            trivy-sbom.json
+            trivy-license.json
+          if-no-files-found: error
+          overwrite: true

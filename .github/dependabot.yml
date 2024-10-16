@@ -22,3 +22,18 @@ updates:
       allgithubactions:
         patterns:
           - "*"
+  - package-ecosystem: "gomod"
+    directories: 
+      - "FeedAnalyzer"
+      - "FeedDocument"
+      - "FeedProcess"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Amsterdam"
+    groups:
+      allgomod:
+        patterns:
+          - "*"
+
