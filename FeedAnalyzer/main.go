@@ -9,9 +9,12 @@ import (
 	"time"
 )
 
-var scheduleTime int
-var url string
 var running bool
+
+type Element struct {
+	XMLName xml.Name
+	Content string `xml:",innerxml"` // Capture the inner XML content
+}
 
 // todo: split nicely in separate structs and add more content types
 type Feed struct {
@@ -30,6 +33,7 @@ type Feed struct {
 	Rights string  `xml:"rights"`
 	ID     string  `xml:"id"`
 	Entry  []Entry `xml:"entry"`
+    UnknownParts []Element `xml:",any"`
 }
 
 type Entry struct {
@@ -45,9 +49,11 @@ type Entry struct {
 	Link []struct {
 		Rel  string `xml:"rel,attr"`
 		Href string `xml:"href,attr"`
-	} `xml:"link"`
+	} `xml:"link"` 
 	Content Content `xml:"content"`
+    UnknownParts []Element `xml:",any"`
 }
+
 type Content struct {
 	Type    string `xml:"type,attr"`
 	Verslag *struct {
@@ -63,10 +69,10 @@ type Content struct {
 		Soort  string `xml:"soort"`
 		Status string `xml:"status"`
 	} `xml:"verslag"`
-	Unparsed []xml.Attr `xml:",any,attr"`
+	UnknownParts []Element `xml:",any"`
 }
 
-func parseXML(data []byte) (Feed, error) {
+func parseMainXML(data []byte) (Feed, error) {
 	var feed Feed
 	err := xml.Unmarshal(data, &feed)
 	return feed, err
@@ -90,16 +96,23 @@ func findNextLink(feed Feed) string {
 	return ""
 }
 
-func parseEntries(entry []Entry) {
-	// todo store entries in database
+func parseEntry(entry Entry) {
 
-	// todo: convert entry to cloud event for new entry
+    //insert into postgresdb
 
-	// todo: send cloud event to event bus (rabbitmq)
+
+    if entry.UnknownParts != nil {
+        log.Printf("entry.UnknownParts: %v\n", entry.UnknownParts)
+    }
+    if entry.Content.UnknownParts != nil {
+        log.Printf("entry.Category: %v\n", entry.Category)
+        log.Printf("entry.Content.type: %s\n", entry.Content.Type)
+        log.Printf("entry.Content.UnknownParts: %v\n", entry.Content.UnknownParts)
+    }
 
 }
 
-func scanSyncFeed() {
+func scanSyncFeed(url string) {
 	if running {
 		return
 	}
@@ -116,13 +129,19 @@ func scanSyncFeed() {
 			log.Printf("error fetching XML: %v", err)
 			break
 		}
-		feed, err := parseXML(data)
+		feed, err := parseMainXML(data)
 		if err != nil {
 			log.Printf("error parsing XML: %v", err)
 			break
 		}
 
-		go parseEntries(feed.Entry)
+        if feed.UnknownParts != nil {
+            log.Printf("feed.UnknownParts: %v\n", feed.UnknownParts)
+        }
+
+        for _, entry := range feed.Entry {
+            go parseEntry(entry)
+        }
 
 		nexturl = findNextLink(feed)
 		// todo: store last url with skiptoken in database
@@ -130,10 +149,34 @@ func scanSyncFeed() {
 }
 
 func main() {
+    var scheduleTime int
+    var url string
+
+    var database_user string
+    var database_password string
+    var database_database string
+    var database_server string
+    var database_port int
+
+    var kafka_server string
+    var kafka_topic string
+
 
 	flag.IntVar(&scheduleTime, "scheduleTime", 5, "Schedule time in seconds")
+
 	flag.StringVar(&url, "url", "https://gegevensmagazijn.tweedekamer.nl/SyncFeed/2.0/Feed", "URL to scan")
+
+    flag.StringVar(&database_user, "db_user", "tweedekamer", "User to connect to db")
+    flag.StringVar(&database_password, "db_password", "changethis", "password to connect to db")
+    flag.StringVar(&database_database, "db_database", "tweedekamer", "Database name to connect to")
+    flag.StringVar(&database_server, "db_server", "postgres", "database server to connect to")
+    flag.IntVar(&database_port, "db_port", 5432, "database port to connect to")
+
+    flag.StringVar(&kafka_server, "kafka_server", "kafka:9092", "kafka server to connect to")
+    flag.StringVar(&kafka_topic, "kafka_topic", "tweedekamer", "kafka topic to connect to")
+
 	flag.Parse()
+
 	log.Println("scheduleTime:", scheduleTime)
 	log.Println("url:", url)
 
@@ -141,6 +184,6 @@ func main() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		go scanSyncFeed()
+		go scanSyncFeed(url)
 	}
 }

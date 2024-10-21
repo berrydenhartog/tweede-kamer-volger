@@ -2,6 +2,11 @@ services:
   TweedeKamerFeedAnalyzer:
     image: berrydenhartog/tweede-kamer-feed-analyzer:dev
     build: FeedAnalyzer/
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
 
   kafka:
     image: apache/kafka:3.8.0
@@ -16,6 +21,33 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 2s
+      retries: 5
+    volumes:
+      - kafka:/var/lib/kafka/data
 
+  postgres:
+    image: postgres:16.3
+    shm_size: 128mb
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    restart: always
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./postgres-init/:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 2s
+      retries: 5
 
-
+volumes:
+  postgres:
+  kafka:
