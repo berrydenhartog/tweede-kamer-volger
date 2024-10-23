@@ -9,68 +9,9 @@ import (
 	"time"
 )
 
+
 var running bool
 
-type Element struct {
-	XMLName xml.Name
-	Content string `xml:",innerxml"` // Capture the inner XML content
-}
-
-// todo: split nicely in separate structs and add more content types
-type Feed struct {
-	XMLName xml.Name `xml:"feed"`
-	Title   string   `xml:"title"`
-	Link    []struct {
-		Rel  string `xml:"rel,attr"`
-		Href string `xml:"href,attr"`
-	} `xml:"link"`
-	Updated string `xml:"updated"`
-	Author  struct {
-		Name  string `xml:"name"`
-		URI   string `xml:"uri"`
-		Email string `xml:"email"`
-	} `xml:"author"`
-	Rights string  `xml:"rights"`
-	ID     string  `xml:"id"`
-	Entry  []Entry `xml:"entry"`
-    UnknownParts []Element `xml:",any"`
-}
-
-type Entry struct {
-	Title  string `xml:"title"`
-	ID     string `xml:"id"`
-	Author struct {
-		Name string `xml:"name"`
-	} `xml:"author"`
-	Updated  string `xml:"updated"`
-	Category struct {
-		Term string `xml:"term,attr"`
-	} `xml:"category"`
-	Link []struct {
-		Rel  string `xml:"rel,attr"`
-		Href string `xml:"href,attr"`
-	} `xml:"link"` 
-	Content Content `xml:"content"`
-    UnknownParts []Element `xml:",any"`
-}
-
-type Content struct {
-	Type    string `xml:"type,attr"`
-	Verslag *struct {
-		ID            string `xml:"id,attr"`
-		Verwijderd    string `xml:"verwijderd,attr"`
-		Bijgewerkt    string `xml:"bijgewerkt,attr"`
-		ContentType   string `xml:"contentType,attr"`
-		ContentLength string `xml:"contentLength,attr"`
-		Vergadering   struct {
-			XSIType string `xml:"xsi:type,attr"`
-			Ref     string `xml:"ref,attr"`
-		} `xml:"vergadering"`
-		Soort  string `xml:"soort"`
-		Status string `xml:"status"`
-	} `xml:"verslag"`
-	UnknownParts []Element `xml:",any"`
-}
 
 func parseMainXML(data []byte) (Feed, error) {
 	var feed Feed
@@ -105,9 +46,8 @@ func parseEntry(entry Entry) {
         log.Printf("entry.UnknownParts: %v\n", entry.UnknownParts)
     }
     if entry.Content.UnknownParts != nil {
-        log.Printf("entry.Category: %v\n", entry.Category)
-        log.Printf("entry.Content.type: %s\n", entry.Content.Type)
-        log.Printf("entry.Content.UnknownParts: %v\n", entry.Content.UnknownParts)
+        log.Printf("entry.Category %s: %v \n", entry.Category, entry.Content.UnknownParts)
+        //log.Printf("entry.Content.UnknownParts: %v\n", entry.Content.UnknownParts)
     }
 
 }
